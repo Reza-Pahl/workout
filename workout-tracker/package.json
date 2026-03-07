@@ -1,0 +1,21 @@
+{
+  "name": "workout-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node server/index.js",
+    "client": "vite client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "vite": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}

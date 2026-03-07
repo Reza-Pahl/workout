@@ -1,0 +1,203 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f4f6f8;
+  color: #1a1a1a;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+/* Form */
+.workout-form {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  flex: 1;
+  min-width: 120px;
+}
+
+.form-row input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.form-row input:focus {
+  outline: 2px solid #4f6ef7;
+  border-color: transparent;
+}
+
+button[type="submit"] {
+  background: #4f6ef7;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  background: #3a55d4;
+}
+
+/* Log */
+.log-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.workout-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.workout-table th,
+.workout-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.workout-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+}
+
+.workout-table tr:last-child td {
+  border-bottom: none;
+}
+
+.delete-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.delete-btn:hover {
+  background: #fee;
+  border-color: #f99;
+  color: #c00;
+}
+
+.empty {
+  color: #888;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.error {
+  background: #fee;
+  color: #c00;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.tab-btn.active {
+  background: #4f6ef7;
+  color: #fff;
+  border-color: #4f6ef7;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #f0f2ff;
+}
+
+/* Filter buttons (SharedHistory) */
+.filter-btns {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-btn {
+  background: #f4f6f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.filter-btn.active {
+  background: #4f6ef7;
+  color: #fff;
+  border-color: #4f6ef7;
+}
+
+.filter-btn:hover:not(.active) {
+  background: #e8eaff;
+}

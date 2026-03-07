@@ -1,0 +1,14 @@
+{
+  "name": "workout-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "dotenv": "^16.0.0"
+  }
+}
