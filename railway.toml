@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && cd workout-tracker/client && npm install && npm run build && cd ../.."
+buildCommand = "npm install && cd workout-tracker && npm install && npm run build"
 
 [deploy]
 startCommand = "node start.js"

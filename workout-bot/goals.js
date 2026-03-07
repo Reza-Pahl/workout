@@ -1,8 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
+const GOALS_DIR = process.env.DB_PATH
+  ? path.dirname(process.env.DB_PATH)
+  : __dirname;
+
 function goalsPath(user) {
-  return path.join(__dirname, `goals-${user}.json`);
+  return path.join(GOALS_DIR, `goals-${user}.json`);
 }
 
 function getGoals(user) {
