@@ -3,7 +3,7 @@ import WorkoutForm from './components/WorkoutForm';
 import WorkoutLog from './components/WorkoutLog';
 import SharedHistory from './components/SharedHistory';
 
-const MY_USER = 'Vince';
+const MY_USER = 'Reza';
 
 export default function App() {
   const [tab, setTab] = useState('mine');
