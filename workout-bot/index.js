@@ -1,7 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const Anthropic = require('@anthropic-ai/sdk');
-const { getSummary, logWorkout, editWorkout, getWeightProgression, getWeeklyVolume } = require('./db');
+const { getSummary, logWorkout, editWorkout } = require('./db');
 const { getGoals, saveGoals } = require('./goals');
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
@@ -21,15 +21,6 @@ try {
 function resolveUser(chatId) {
   return USER_MAP[String(chatId)] || null;
 }
-
-const CHART_COLORS = [
-  'rgb(99, 132, 255)',
-  'rgb(255, 99, 132)',
-  'rgb(75, 192, 192)',
-  'rgb(255, 159, 64)',
-  'rgb(153, 102, 255)',
-  'rgb(255, 205, 86)',
-];
 
 // Per-user conversation history
 const conversations = new Map();
@@ -77,114 +68,7 @@ const tools = [
       required: ['goal']
     }
   },
-  {
-    name: 'generate_chart',
-    description: 'Generate a chart image and send it in Telegram. ' +
-      '"weight_progression" shows weight over time for one or more exercises (line chart). ' +
-      '"weekly_volume" shows total sets per week over last 8 weeks (bar chart). ' +
-      'Use exercise names exactly as listed in the system prompt. ' +
-      'Only call this when the user explicitly asks for a chart or graph.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        chart_type: {
-          type: 'string',
-          enum: ['weight_progression', 'weekly_volume'],
-          description: 'Type of chart to generate'
-        },
-        exercises: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Exercise names for weight_progression charts. Omit for weekly_volume.'
-        }
-      },
-      required: ['chart_type']
-    }
-  }
 ];
-
-function buildChartConfig(chartType, exercises, user) {
-  if (chartType === 'weight_progression') {
-    const data = getWeightProgression(user, exercises);
-
-    // Collect all unique dates across all exercises, sorted
-    const dateSet = new Set();
-    for (const ex of exercises) {
-      for (const row of data[ex]) dateSet.add(row.date);
-    }
-    const allDates = [...dateSet].sort();
-
-    const labels = allDates.map(d => {
-      const dt = new Date(d + 'T00:00:00');
-      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-
-    const datasets = exercises.map((ex, i) => {
-      const byDate = new Map(data[ex].map(r => [r.date, r.weight]));
-      return {
-        label: ex,
-        data: allDates.map(d => byDate.has(d) ? byDate.get(d) : null),
-        borderColor: CHART_COLORS[i % CHART_COLORS.length],
-        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
-        spanGaps: true,
-        tension: 0.3,
-        fill: false,
-      };
-    });
-
-    return {
-      type: 'line',
-      data: { labels, datasets },
-      options: {
-        plugins: {
-          legend: { display: exercises.length > 1 },
-          title: { display: true, text: 'Weight Progression (lbs)' },
-        },
-        scales: {
-          y: { beginAtZero: false },
-        },
-      },
-    };
-  } else {
-    // weekly_volume
-    const rows = getWeeklyVolume(user);
-    const labels = rows.map(r => {
-      const dt = new Date(r.week_start + 'T00:00:00');
-      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-    return {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Total Sets',
-          data: rows.map(r => r.total_sets),
-          backgroundColor: 'rgb(99, 132, 255)',
-          borderRadius: 4,
-        }],
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Weekly Volume (sets)' },
-        },
-        scales: {
-          y: { beginAtZero: true },
-        },
-      },
-    };
-  }
-}
-
-async function fetchChartBuffer(chartConfig) {
-  const res = await fetch('https://quickchart.io/chart', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chart: chartConfig, width: 700, height: 400, backgroundColor: 'white' }),
-  });
-  if (!res.ok) throw new Error(`QuickChart error ${res.status}: ${await res.text()}`);
-  return Buffer.from(await res.arrayBuffer());
-}
 
 function buildSystemPrompt(user) {
   const today = new Date().toISOString().split('T')[0];
@@ -248,8 +132,6 @@ Proactivity: Only surface observations for new PRs, gaps over 10 days, and plate
 Goals: When the user explicitly states a fitness goal, use the set_goal tool to save it. Reference their goals naturally when relevant — don't bring them up unprompted every message.
 
 Session wrap-up: When the user signals they are done for the day ("done", "that's it", "finished", etc.), always reply with a brief session summary: exercises logged that day, total sets, and any PRs hit.
-
-Charts: When the user asks for a chart or graph, use the generate_chart tool. Use exercise names exactly as listed above.
 
 Edits: When the user wants to correct an existing entry, use the edit_workout tool — match their description to an entry in the recent workouts list above and use its id.
 
@@ -328,19 +210,6 @@ bot.on('message', async (msg) => {
           goals.push({ goal: block.input.goal, added: new Date().toISOString().split('T')[0] });
           saveGoals(user, goals);
           resultContent = `Goal saved: "${block.input.goal}"`;
-
-        } else if (block.name === 'generate_chart') {
-          try {
-            const { chart_type, exercises = [] } = block.input;
-            const chartConfig = buildChartConfig(chart_type, exercises, user);
-            const imageBuffer = await fetchChartBuffer(chartConfig);
-            await bot.sendPhoto(chatId, imageBuffer, {}, { filename: 'chart.png', contentType: 'image/png' });
-            resultContent = `Chart sent. Type: ${chart_type}.` +
-              (exercises.length > 0 ? ` Exercises: ${exercises.join(', ')}.` : '');
-          } catch (err) {
-            console.error('Chart error:', err.message);
-            resultContent = `Chart generation failed: ${err.message}`;
-          }
 
         } else {
           resultContent = `Unknown tool: ${block.name}`;
