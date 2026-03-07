@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import WorkoutForm from './components/WorkoutForm';
-import WorkoutLog from './components/WorkoutLog';
+import ExerciseList from './components/ExerciseList';
+import ExerciseDetail from './components/ExerciseDetail';
 import SharedHistory from './components/SharedHistory';
+import WorkoutForm from './components/WorkoutForm';
 
 const MY_USER = 'Reza';
 
 export default function App() {
   const [tab, setTab] = useState('mine');
   const [workouts, setWorkouts] = useState([]);
+  const [selectedExercise, setSelectedExercise] = useState(null);
   const [error, setError] = useState(null);
 
   const fetchWorkouts = useCallback(async () => {
@@ -25,36 +27,60 @@ export default function App() {
     if (tab === 'mine') fetchWorkouts();
   }, [tab, fetchWorkouts]);
 
-  async function handleDelete(id) {
-    await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
+  function handleTabChange(newTab) {
+    setTab(newTab);
+    setSelectedExercise(null);
+  }
+
+  function handleLogAdded() {
     fetchWorkouts();
+    handleTabChange('mine');
   }
 
   return (
-    <div className="container">
-      <h1>Workout Tracker</h1>
+    <div className="app">
+      <div className="app-header">
+        <h1 className="app-title">
+          {tab === 'mine' && selectedExercise ? selectedExercise : 'Workouts'}
+        </h1>
+      </div>
+
       <div className="tabs">
         <button
           className={`tab-btn${tab === 'mine' ? ' active' : ''}`}
-          onClick={() => setTab('mine')}
+          onClick={() => handleTabChange('mine')}
         >
           My Workouts
         </button>
         <button
           className={`tab-btn${tab === 'shared' ? ' active' : ''}`}
-          onClick={() => setTab('shared')}
+          onClick={() => handleTabChange('shared')}
         >
-          Shared History
+          Shared
+        </button>
+        <button
+          className={`tab-btn${tab === 'log' ? ' active' : ''}`}
+          onClick={() => handleTabChange('log')}
+        >
+          Log
         </button>
       </div>
-      {error && <p className="error">{error}</p>}
+
+      {error && <p className="error-msg">{error}</p>}
+
       {tab === 'mine' && (
-        <>
-          <WorkoutForm onAdded={fetchWorkouts} />
-          <WorkoutLog workouts={workouts} onDelete={handleDelete} />
-        </>
+        selectedExercise
+          ? <ExerciseDetail
+              exercise={selectedExercise}
+              workouts={workouts}
+              onBack={() => setSelectedExercise(null)}
+            />
+          : <ExerciseList workouts={workouts} onSelect={setSelectedExercise} />
       )}
+
       {tab === 'shared' && <SharedHistory />}
+
+      {tab === 'log' && <WorkoutForm onAdded={handleLogAdded} />}
     </div>
   );
 }
