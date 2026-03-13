@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 const today = new Date().toISOString().slice(0, 10);
 
-export default function WorkoutForm({ onAdded }) {
+export default function WorkoutForm({ onAdded, workouts = [], user }) {
   const [form, setForm] = useState({ exercise: '', reps: '', weight: '', date: today, unit: 'kg' });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -25,6 +25,7 @@ export default function WorkoutForm({ onAdded }) {
           weight: Number(form.weight),
           date: form.date,
           unit: form.unit,
+          user,
         }),
       });
       if (!res.ok) throw new Error('Failed to save workout');
@@ -35,6 +36,8 @@ export default function WorkoutForm({ onAdded }) {
       setLoading(false);
     }
   }
+
+  const exerciseNames = [...new Set(workouts.map(w => w.exercise))].sort();
 
   return (
     <div className="log-view">
@@ -51,8 +54,12 @@ export default function WorkoutForm({ onAdded }) {
               value={form.exercise}
               onChange={handleChange}
               placeholder="e.g. Pull-Up"
+              list="exercise-suggestions"
               required
             />
+            <datalist id="exercise-suggestions">
+              {exerciseNames.map(name => <option key={name} value={name} />)}
+            </datalist>
           </div>
           <div className="form-field">
             <label className="form-label" htmlFor="reps">Reps</label>

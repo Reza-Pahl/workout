@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Dot,
 } from 'recharts';
@@ -12,7 +13,42 @@ function formatDateFull(dateStr) {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function ExerciseDetail({ exercise, workouts, onBack }) {
+export default function ExerciseDetail({ exercise, workouts, onBack, user, onRenamed, onUpdated }) {
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState(exercise);
+  const [renameError, setRenameError] = useState(null);
+  const [expandedDate, setExpandedDate] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editValues, setEditValues] = useState({ reps: '', weight: '' });
+
+  async function handleSaveEdit() {
+    const res = await fetch(`/api/workouts/${editingId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reps: Number(editValues.reps), weight: Number(editValues.weight) }),
+    });
+    if (!res.ok) return;
+    setEditingId(null);
+    onUpdated();
+  }
+
+  async function handleDelete(id) {
+    await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
+    onUpdated();
+  }
+
+  async function handleRename() {
+    const trimmed = renameValue.trim();
+    if (!trimmed || trimmed === exercise) { setIsRenaming(false); return; }
+    const res = await fetch('/api/workouts/rename', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldName: exercise, newName: trimmed, user }),
+    });
+    if (!res.ok) { const d = await res.json(); setRenameError(d.error || 'Rename failed'); return; }
+    onRenamed(trimmed);
+  }
+
   const entries = workouts.filter(w => w.exercise === exercise);
 
   // Group by date
@@ -40,6 +76,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, sets]) => ({
       date,
+      sets,
       setCount: sets.length,
       maxWeight: Math.max(...sets.map(s => s.weight)),
       maxReps: Math.max(...sets.map(s => s.reps)),
@@ -75,7 +112,19 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
         <button className="back-btn" onClick={onBack}>
           ‹ Back
         </button>
-        <span className="detail-title">{exercise}</span>
+        {isRenaming ? (
+          <div className="rename-row">
+            <input className="rename-input" value={renameValue} onChange={e => setRenameValue(e.target.value)} autoFocus />
+            <button className="rename-confirm-btn" onClick={handleRename}>Save</button>
+            <button className="rename-cancel-btn" onClick={() => { setIsRenaming(false); setRenameValue(exercise); setRenameError(null); }}>Cancel</button>
+          </div>
+        ) : (
+          <div className="detail-title-row">
+            <span className="detail-title">{exercise}</span>
+            <button className="rename-edit-btn" onClick={() => setIsRenaming(true)}>✎</button>
+          </div>
+        )}
+        {renameError && <span className="rename-error">{renameError}</span>}
       </div>
 
       {chartData.length > 0 && (
@@ -110,17 +159,48 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
       )}
 
       <div className="session-list">
-        {sessions.map(({ date, setCount, maxWeight, maxReps, allBodyweight }) => (
-          <div key={date} className="session-card">
-            <div>
-              <div className="session-date">{formatDateFull(date)}</div>
-              <div className="session-detail">
-                {setCount} {setCount === 1 ? 'set' : 'sets'}
+        {sessions.map(({ date, sets, setCount, maxWeight, maxReps, allBodyweight }) => (
+          <div key={date} className="session-card-group">
+            <div className="session-card" onClick={() => setExpandedDate(expandedDate === date ? null : date)}>
+              <div>
+                <div className="session-date">{formatDateFull(date)}</div>
+                <div className="session-detail">{setCount} {setCount === 1 ? 'set' : 'sets'}</div>
+              </div>
+              <div className="session-card-right">
+                <div className="session-weight">
+                  {allBodyweight ? `${maxReps} reps` : `${maxWeight} ${unitLabel}`}
+                </div>
+                <span className="session-chevron">{expandedDate === date ? '▾' : '›'}</span>
               </div>
             </div>
-            <div className="session-weight">
-              {allBodyweight ? `${maxReps} reps` : `${maxWeight} ${unitLabel}`}
-            </div>
+            {expandedDate === date && (
+              <div className="set-list">
+                {sets.map((s, i) => (
+                  editingId === s.id ? (
+                    <div key={s.id} className="set-edit-row">
+                      <span className="set-edit-sep">Set {i + 1}</span>
+                      <input type="number" className="set-edit-input" value={editValues.reps} onChange={e => setEditValues({ ...editValues, reps: e.target.value })} min="1" />
+                      <span className="set-edit-sep">reps</span>
+                      {!allBodyweight && <>
+                        <span className="set-edit-sep">×</span>
+                        <input type="number" className="set-edit-input" value={editValues.weight} onChange={e => setEditValues({ ...editValues, weight: e.target.value })} min="0" step="0.5" />
+                        <span className="set-edit-sep">{s.unit || unitLabel}</span>
+                      </>}
+                      <button className="rename-confirm-btn" onClick={handleSaveEdit}>Save</button>
+                      <button className="rename-cancel-btn" onClick={() => setEditingId(null)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <div key={s.id} className="set-row">
+                      <span className="set-info">Set {i + 1}: {s.reps} reps{!allBodyweight ? ` × ${s.weight} ${s.unit || unitLabel}` : ''}</span>
+                      <div className="set-actions">
+                        <button className="rename-edit-btn" onClick={() => { setEditingId(s.id); setEditValues({ reps: s.reps, weight: s.weight }); }}>✎</button>
+                        <button className="set-delete-btn" onClick={() => handleDelete(s.id)}>✕</button>
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

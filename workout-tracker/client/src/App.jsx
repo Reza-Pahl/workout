@@ -24,8 +24,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'mine') fetchWorkouts();
-  }, [tab, fetchWorkouts]);
+    fetchWorkouts();
+  }, [fetchWorkouts]);
 
   function handleTabChange(newTab) {
     setTab(newTab);
@@ -35,6 +35,15 @@ export default function App() {
   function handleLogAdded() {
     fetchWorkouts();
     handleTabChange('mine');
+  }
+
+  async function handleRenamed() {
+    await fetchWorkouts();
+    setSelectedExercise(null);
+  }
+
+  function handleUpdated() {
+    fetchWorkouts();
   }
 
   return (
@@ -74,13 +83,16 @@ export default function App() {
               exercise={selectedExercise}
               workouts={workouts}
               onBack={() => setSelectedExercise(null)}
+              user={MY_USER}
+              onRenamed={handleRenamed}
+              onUpdated={handleUpdated}
             />
           : <ExerciseList workouts={workouts} onSelect={setSelectedExercise} />
       )}
 
       {tab === 'shared' && <SharedHistory />}
 
-      {tab === 'log' && <WorkoutForm onAdded={handleLogAdded} />}
+      {tab === 'log' && <WorkoutForm onAdded={handleLogAdded} workouts={workouts} user={MY_USER} />}
     </div>
   );
 }
