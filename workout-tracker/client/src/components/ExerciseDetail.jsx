@@ -46,7 +46,8 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
       allBodyweight,
     }));
 
-  const yLabel = allBodyweight ? 'Reps' : 'Weight (kg)';
+  const unitLabel = allBodyweight ? '' : (entries.find(e => e.weight > 0)?.unit || 'kg');
+  const yLabel = allBodyweight ? 'Reps' : `Weight (${unitLabel})`;
 
   const CustomTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
@@ -62,7 +63,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
       }}>
         <div style={{ color: '#8E8E93', marginBottom: 2 }}>{label}</div>
         <div style={{ color: '#0A84FF', fontWeight: 600 }}>
-          {value}{allBodyweight ? ' reps' : ' kg'}
+          {value}{allBodyweight ? ' reps' : ` ${unitLabel}`}
         </div>
       </div>
     );
@@ -118,7 +119,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack }) {
               </div>
             </div>
             <div className="session-weight">
-              {allBodyweight ? `${maxReps} reps` : `${maxWeight} kg`}
+              {allBodyweight ? `${maxReps} reps` : `${maxWeight} ${unitLabel}`}
             </div>
           </div>
         ))}

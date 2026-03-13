@@ -24,4 +24,15 @@ try {
   // Column already exists — ignore
 }
 
+// Migration: add unit column; backfill Reza's entries to 'lbs'
+try {
+  db.prepare("ALTER TABLE workouts ADD COLUMN unit TEXT NOT NULL DEFAULT 'kg'").run();
+  db.prepare("UPDATE workouts SET unit = 'lbs' WHERE user = 'Reza'").run();
+} catch {
+  // Column already exists — ignore
+}
+
+// Backfill legacy 'Vince' rows (old name for Reza) to lbs
+db.prepare("UPDATE workouts SET unit = 'lbs' WHERE user = 'Vince'").run();
+
 module.exports = db;

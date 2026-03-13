@@ -43,7 +43,7 @@ export default function SharedHistory() {
                 </span>
                 <span className="entry-exercise">{w.exercise}</span>
                 <span className="entry-stats">
-                  {w.reps} × {w.weight > 0 ? `${w.weight} kg` : 'BW'}
+                  {w.reps} × {w.weight > 0 ? `${w.weight} ${w.unit || 'kg'}` : 'BW'}
                 </span>
               </div>
             ))}

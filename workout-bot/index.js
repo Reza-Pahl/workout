@@ -102,7 +102,7 @@ function buildSystemPrompt(user) {
     if (recent.length > 0) {
       context += `## Recent Workouts (last 20 entries)\n`;
       for (const w of recent) {
-        context += `- [id:${w.id}] ${w.date}: ${w.exercise} — ${w.reps} reps @ ${w.weight} lbs\n`;
+        context += `- [id:${w.id}] ${w.date}: ${w.exercise} — ${w.reps} reps @ ${w.weight} ${w.unit || 'lbs'}\n`;
       }
       context += '\n';
     }
@@ -195,15 +195,15 @@ bot.on('message', async (msg) => {
 
         if (block.name === 'log_workout') {
           const { exercise, reps, weight, date } = block.input;
-          const saved = logWorkout(user, exercise, reps, weight, date);
+          const saved = logWorkout(user, exercise, reps, weight, date, 'lbs');
           console.log(`[${user}] Logged workout:`, saved);
-          resultContent = `Saved: ${saved.exercise}, ${saved.reps} reps @ ${saved.weight} lbs on ${saved.date} (id:${saved.id})`;
+          resultContent = `Saved: ${saved.exercise}, ${saved.reps} reps @ ${saved.weight} ${saved.unit} on ${saved.date} (id:${saved.id})`;
 
         } else if (block.name === 'edit_workout') {
           const { id, ...fields } = block.input;
           const updated = editWorkout(user, id, fields);
           console.log(`[${user}] Edited workout:`, updated);
-          resultContent = `Updated id:${updated.id} — ${updated.exercise}, ${updated.reps} reps @ ${updated.weight} lbs on ${updated.date}`;
+          resultContent = `Updated id:${updated.id} — ${updated.exercise}, ${updated.reps} reps @ ${updated.weight} ${updated.unit || 'lbs'} on ${updated.date}`;
 
         } else if (block.name === 'set_goal') {
           const goals = getGoals(user);

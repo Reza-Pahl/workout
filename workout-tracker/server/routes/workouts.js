@@ -19,12 +19,12 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { exercise, reps, weight, date, user = 'Vince' } = req.body;
+  const { exercise, reps, weight, date, user = 'Vince', unit = 'kg' } = req.body;
   if (!exercise || reps == null || weight == null || !date) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  const stmt = db.prepare('INSERT INTO workouts (exercise, reps, weight, date, user) VALUES (?, ?, ?, ?, ?)');
-  const result = stmt.run(exercise, reps, weight, date, user);
+  const stmt = db.prepare('INSERT INTO workouts (exercise, reps, weight, date, user, unit) VALUES (?, ?, ?, ?, ?, ?)');
+  const result = stmt.run(exercise, reps, weight, date, user, unit);
   const row = db.prepare('SELECT * FROM workouts WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(row);
 });

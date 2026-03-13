@@ -37,7 +37,7 @@ function getSummary(user) {
 
   // Recent 20 entries with IDs exposed
   const recent = db.prepare(`
-    SELECT id, date, exercise, reps, weight
+    SELECT id, date, exercise, reps, weight, unit
     FROM workouts
     WHERE user = ?
     ORDER BY date DESC, id DESC
@@ -48,17 +48,17 @@ function getSummary(user) {
   return { exercises, weekly, recent };
 }
 
-function logWorkout(user, exercise, reps, weight, date) {
+function logWorkout(user, exercise, reps, weight, date, unit = 'lbs') {
   const db = new DatabaseSync(DB_PATH);
-  const stmt = db.prepare('INSERT INTO workouts (exercise, reps, weight, date, user) VALUES (?, ?, ?, ?, ?)');
-  const result = stmt.run(exercise, reps, weight, date, user);
+  const stmt = db.prepare('INSERT INTO workouts (exercise, reps, weight, date, user, unit) VALUES (?, ?, ?, ?, ?, ?)');
+  const result = stmt.run(exercise, reps, weight, date, user, unit);
   const row = db.prepare('SELECT * FROM workouts WHERE id = ?').get(result.lastInsertRowid);
   db.close();
   return row;
 }
 
 function editWorkout(user, id, fields) {
-  const allowed = ['exercise', 'reps', 'weight', 'date'];
+  const allowed = ['exercise', 'reps', 'weight', 'date', 'unit'];
   const updates = Object.keys(fields).filter(
     k => allowed.includes(k) && fields[k] !== undefined && fields[k] !== null
   );

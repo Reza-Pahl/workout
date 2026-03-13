@@ -3,7 +3,7 @@ import { useState } from 'react';
 const today = new Date().toISOString().slice(0, 10);
 
 export default function WorkoutForm({ onAdded }) {
-  const [form, setForm] = useState({ exercise: '', reps: '', weight: '', date: today });
+  const [form, setForm] = useState({ exercise: '', reps: '', weight: '', date: today, unit: 'kg' });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -24,10 +24,11 @@ export default function WorkoutForm({ onAdded }) {
           reps: Number(form.reps),
           weight: Number(form.weight),
           date: form.date,
+          unit: form.unit,
         }),
       });
       if (!res.ok) throw new Error('Failed to save workout');
-      setForm({ exercise: '', reps: '', weight: '', date: today });
+      setForm({ exercise: '', reps: '', weight: '', date: today, unit: 'kg' });
       setSaved(true);
       onAdded();
     } finally {
@@ -67,7 +68,7 @@ export default function WorkoutForm({ onAdded }) {
             />
           </div>
           <div className="form-field">
-            <label className="form-label" htmlFor="weight">Weight (kg) — 0 for bodyweight</label>
+            <label className="form-label" htmlFor="weight">Weight — 0 for bodyweight</label>
             <input
               id="weight"
               className="form-input"
@@ -79,6 +80,19 @@ export default function WorkoutForm({ onAdded }) {
               step="0.5"
               required
             />
+          </div>
+          <div className="form-field">
+            <label className="form-label" htmlFor="unit">Unit</label>
+            <select
+              id="unit"
+              className="form-input"
+              name="unit"
+              value={form.unit}
+              onChange={handleChange}
+            >
+              <option value="kg">kg</option>
+              <option value="lbs">lbs</option>
+            </select>
           </div>
           <div className="form-field">
             <label className="form-label" htmlFor="date">Date</label>
