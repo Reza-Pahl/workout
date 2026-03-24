@@ -66,6 +66,48 @@ body {
   padding: 0 16px;
 }
 
+.exercise-search {
+  background: #1C1C1E;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: #FFFFFF;
+  width: 100%;
+  font-family: inherit;
+  margin-bottom: 16px;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+.exercise-search:focus {
+  outline: none;
+  border-color: #0A84FF;
+}
+
+.exercise-search::placeholder {
+  color: #48484A;
+}
+
+.trend-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.trend-up {
+  color: #30D158;
+}
+
+.trend-down {
+  color: #FF453A;
+}
+
+.trend-flat {
+  color: #8E8E93;
+}
+
 .section-title {
   font-size: 13px;
   font-weight: 600;
@@ -482,6 +524,45 @@ body {
 .rename-confirm-btn { background: #0A84FF; color: #FFF; border: none; border-radius: 8px; padding: 4px 12px; font-size: 14px; cursor: pointer; }
 .rename-cancel-btn { background: none; color: #8E8E93; border: none; font-size: 14px; cursor: pointer; }
 .rename-error { color: #FF453A; font-size: 13px; margin-left: 8px; }
+
+/* ── Undo Toast ── */
+.undo-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2C2C2E;
+  border: 1px solid #38383A;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.undo-btn {
+  background: none;
+  border: none;
+  color: #0A84FF;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.undo-btn:hover {
+  opacity: 0.8;
+}
+
+.set-row-pending-delete {
+  opacity: 0.4;
+}
 
 /* ── Error ── */
 .error-msg {
