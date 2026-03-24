@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Dot,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
 
 function formatDateShort(dateStr) {
@@ -20,6 +20,10 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
   const [expandedDate, setExpandedDate] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({ reps: '', weight: '' });
+  const [undoPending, setUndoPending] = useState(null); // { id }
+  const deleteTimerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(deleteTimerRef.current), []);
 
   async function handleSaveEdit() {
     const res = await fetch(`/api/workouts/${editingId}`, {
@@ -32,9 +36,23 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
     onUpdated();
   }
 
-  async function handleDelete(id) {
-    await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
-    onUpdated();
+  function handleDelete(id) {
+    clearTimeout(deleteTimerRef.current);
+    if (undoPending) {
+      fetch(`/api/workouts/${undoPending.id}`, { method: 'DELETE' }).then(() => onUpdated());
+    }
+    deleteTimerRef.current = setTimeout(() => {
+      fetch(`/api/workouts/${id}`, { method: 'DELETE' }).then(() => {
+        setUndoPending(null);
+        onUpdated();
+      });
+    }, 4000);
+    setUndoPending({ id });
+  }
+
+  function handleUndo() {
+    clearTimeout(deleteTimerRef.current);
+    setUndoPending(null);
   }
 
   async function handleRename() {
@@ -71,6 +89,8 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
         : Math.max(...sets.map(s => s.weight)),
     }));
 
+  const prValue = chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 0;
+
   // Session list: sorted descending
   const sessions = Object.entries(dateMap)
     .sort(([a], [b]) => b.localeCompare(a))
@@ -101,6 +121,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
         <div style={{ color: '#8E8E93', marginBottom: 2 }}>{label}</div>
         <div style={{ color: '#0A84FF', fontWeight: 600 }}>
           {value}{allBodyweight ? ' reps' : ` ${unitLabel}`}
+          {value === prValue && <span style={{ color: '#30D158', marginLeft: 6, fontSize: 11 }}>PR</span>}
         </div>
       </div>
     );
@@ -130,7 +151,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
       {chartData.length > 0 && (
         <div className="chart-card">
           <p className="chart-label">{yLabel} over time</p>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={240}>
             <LineChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#38383A" vertical={false} />
               <XAxis
@@ -145,6 +166,14 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#38383A' }} />
+              {chartData.length > 1 && (
+                <ReferenceLine
+                  y={prValue}
+                  stroke="#30D158"
+                  strokeDasharray="4 2"
+                  label={{ value: 'PR', fill: '#30D158', fontSize: 11, position: 'insideTopRight' }}
+                />
+              )}
               <Line
                 type="monotone"
                 dataKey="value"
@@ -190,7 +219,7 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
                       <button className="rename-cancel-btn" onClick={() => setEditingId(null)}>Cancel</button>
                     </div>
                   ) : (
-                    <div key={s.id} className="set-row">
+                    <div key={s.id} className={`set-row${undoPending?.id === s.id ? ' set-row-pending-delete' : ''}`}>
                       <span className="set-info">Set {i + 1}: {s.reps} reps{!allBodyweight ? ` × ${s.weight} ${s.unit || unitLabel}` : ''}</span>
                       <div className="set-actions">
                         <button className="rename-edit-btn" onClick={() => { setEditingId(s.id); setEditValues({ reps: s.reps, weight: s.weight }); }}>✎</button>
@@ -204,6 +233,13 @@ export default function ExerciseDetail({ exercise, workouts, onBack, user, onRen
           </div>
         ))}
       </div>
+
+      {undoPending && (
+        <div className="undo-toast">
+          <span>Set deleted</span>
+          <button className="undo-btn" onClick={handleUndo}>Undo</button>
+        </div>
+      )}
     </div>
   );
 }
